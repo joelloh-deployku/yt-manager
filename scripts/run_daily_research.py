@@ -9,7 +9,11 @@ sys.path.insert(0, str(ROOT / "src"))
 from dotenv import load_dotenv
 from yt_manager.db import connect, initialize
 from yt_manager.reporting import render_daily_report
-from yt_manager.scoring import calculate_baseline, calculate_outlier_score
+from yt_manager.scoring import (
+    calculate_baseline,
+    calculate_outlier_score,
+    partition_by_candidate_window,
+)
 from yt_manager.youtube import YouTubeResearchClient
 
 
@@ -22,6 +26,8 @@ def main() -> int:
     channels = [x.strip() for x in raw_channels.split(",") if x.strip()]
     videos_per_channel = int(os.getenv("VIDEOS_PER_CHANNEL", "15"))
     baseline_count = int(os.getenv("BASELINE_VIDEO_COUNT", "12"))
+    candidate_window_days = int(os.getenv("CANDIDATE_WINDOW_DAYS", "14"))
+    history_fetch_count = int(os.getenv("HISTORY_FETCH_COUNT", "40"))
     db_path = os.getenv("DATABASE_PATH", "data/yt_manager.db")
     output_dir = os.getenv("OUTPUT_DIR", "outputs")
 
@@ -41,10 +47,18 @@ def main() -> int:
     candidates = []
     try:
         for channel_ref in channels:
-            videos = client.recent_videos(channel_ref, max(videos_per_channel, baseline_count))
-            baseline_sample = [v["views"] for v in videos[:baseline_count]]
+            fetch_count = max(history_fetch_count, videos_per_channel + baseline_count)
+            videos = client.recent_videos(channel_ref, fetch_count)
+            recent, historical = partition_by_candidate_window(
+                videos,
+                candidate_window_days,
+            )
+            baseline_sample = [v["views"] for v in historical[:baseline_count]]
             baseline = calculate_baseline(baseline_sample)
-            for video in videos[:videos_per_channel]:
+            if baseline <= 0:
+                continue
+
+            for video in recent[:videos_per_channel]:
                 item = dict(video)
                 item["baseline_views"] = baseline
                 item["outlier_score"] = calculate_outlier_score(item["views"], baseline)
@@ -68,6 +82,7 @@ def main() -> int:
 
         report = render_daily_report(candidates, output_dir)
         print(f"Research complete: {len(candidates)} candidates")
+        print(f"Candidate window: last {candidate_window_days} days")
         print(f"Report: {report}")
         return 0
     except Exception as exc:
