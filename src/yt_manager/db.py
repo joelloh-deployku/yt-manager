@@ -38,11 +38,38 @@ CREATE TABLE IF NOT EXISTS video_snapshots (
     FOREIGN KEY(run_id) REFERENCES runs(id)
 );
 
+CREATE TABLE IF NOT EXISTS strategy_reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    research_run_id INTEGER NOT NULL UNIQUE,
+    created_at TEXT NOT NULL,
+    summary TEXT NOT NULL,
+    raw_json TEXT NOT NULL,
+    FOREIGN KEY(research_run_id) REFERENCES runs(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS strategy_opportunities (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    strategy_report_id INTEGER NOT NULL,
+    rank INTEGER NOT NULL,
+    working_title TEXT NOT NULL,
+    angle TEXT NOT NULL,
+    why_now TEXT NOT NULL,
+    audience_fit TEXT NOT NULL,
+    confidence TEXT NOT NULL,
+    source_video_ids TEXT NOT NULL,
+    risks TEXT NOT NULL,
+    UNIQUE(strategy_report_id, rank),
+    FOREIGN KEY(strategy_report_id) REFERENCES strategy_reports(id) ON DELETE CASCADE
+);
+
 CREATE INDEX IF NOT EXISTS idx_candidates_run_score
 ON candidates(run_id, outlier_score DESC);
 
 CREATE INDEX IF NOT EXISTS idx_video_snapshots_video_time
 ON video_snapshots(video_id, observed_at);
+
+CREATE INDEX IF NOT EXISTS idx_strategy_opportunities_report_rank
+ON strategy_opportunities(strategy_report_id, rank);
 """
 
 
