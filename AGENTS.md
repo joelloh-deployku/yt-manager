@@ -8,16 +8,16 @@ Build and maintain a reliable AI-assisted YouTube content operations system. Her
 - Milestone 2: versioned channel profile, source-backed Hermes Strategist, deterministic strategy validation/persistence.
 - Milestone 3: explicit human strategy approval, one Hermes Script Writer, creator placeholders, verification notes, deterministic script validation/persistence.
 - Milestone 4: one Hermes Thumbnail Director, exactly three distinct concepts plus a recommended rank, text/source/originality checks, creator-asset requirements, SQLite persistence. No image generation.
+- Milestone 5: one Hermes QA subagent, PASS/NEEDS_CHANGES gate, structured findings, deterministic QA persistence. QA is non-mutating.
 
-## Milestone 5 scope
-Milestone 5 adds a non-mutating QA gate after the validated script + thumbnail package:
-- deterministic QA input tied to the validated package lineage
-- one focused Hermes QA subagent
-- `PASS` or `NEEDS_CHANGES`
-- structured strengths and findings with severity, area, evidence, recommended action, and blocking flag
-- deterministic status validation, Markdown rendering, and additive SQLite QA persistence
+## Milestone 6 scope
+Milestone 6 adds a QA-PASS-gated human production handoff:
+- deterministic input containing the validated script, QA PASS, recommended thumbnail concept, creator inputs, verification notes, and approval lineage
+- one focused Hermes Delivery Producer subagent
+- ordered recording segments, creator-input mapping, verification plan, thumbnail handoff, asset plan, editing notes, checklist, and risks
+- deterministic coverage validation, Markdown rendering, and additive SQLite production persistence
 
-Milestone 5 does not automatically revise scripts or thumbnail concepts. It does not generate images, edit video, publish, schedule, or mutate any YouTube account.
+Milestone 6 does not automatically resolve creator inputs or fact checks. It does not generate images, edit video, upload, publish, schedule, or mutate a YouTube account.
 
 ## Human boundaries
 1. Hermes must not approve a strategy opportunity on Joel's behalf.
@@ -25,26 +25,27 @@ Milestone 5 does not automatically revise scripts or thumbnail concepts. It does
 3. A validated script remains a draft for Joel's review.
 4. Thumbnail concepts do not authorize image generation.
 5. QA `PASS` means ready for the next human production step, not fact-check completion or publishing approval.
+6. A delivery report organizes recording/editing work; it does not prove Joel completed the work or authorize publishing.
 
 ## Agent boundaries
-1. Deterministic Python owns API calls, scoring, approval records, context construction, validation, persistence, limits, and report rendering.
+1. Deterministic Python owns API calls, scoring, approval records, context construction, validation, persistence, limits, gates, and report rendering.
 2. Hermes delegates judgment/creative work to focused subagents.
 3. Strategist: select source-backed opportunities only from supplied research.
 4. Script Writer: develop only the approved opportunity; never fabricate Joel's experience.
 5. Thumbnail Director: develop packaging directions only; never infer competitor thumbnail visuals from titles.
-6. QA: review the supplied validated script + thumbnail package; do not rewrite either asset in the QA response.
-7. Competitor titles/performance are topic/packaging evidence, not transcripts or factual sources.
-8. Missing Joel evidence stays in `[JOEL: ...]` placeholders / `creator_inputs_needed`; unresolved facts stay in `verification_notes`.
+6. QA: review the supplied validated script + thumbnail package; do not rewrite either asset.
+7. Delivery Producer: sequence and package human production work only; do not rewrite upstream script/thumbnail/QA assets or claim open work is complete.
+8. Competitor titles/performance are topic/packaging evidence, not transcripts or factual sources.
+9. Missing Joel evidence stays in `[JOEL: ...]` placeholders / `creator_inputs_needed`; unresolved facts stay in `verification_notes` until Joel resolves them.
 
-## QA rules
-- Allowed statuses: `PASS`, `NEEDS_CHANGES`.
-- Any `BLOCKER` or `HIGH` finding requires `NEEDS_CHANGES`.
-- Any finding explicitly marked as blocking requires `NEEDS_CHANGES`.
-- `PASS` may include non-blocking `MEDIUM` or `LOW` observations.
-- `NEEDS_CHANGES` must identify at least one real material defect; do not manufacture findings.
-- Explicit creator placeholders and verification notes are expected open human work, not automatic QA defects when clearly surfaced.
-- Findings must cite evidence present in the supplied QA input.
-- Do not claim to inspect rendered thumbnail pixels when only concept descriptions are available.
+## Delivery rules
+- Delivery preparation requires a persisted QA report with status `PASS`.
+- Every creator placeholder must appear exactly once across `recording_plan[].creator_inputs`.
+- Every verification-note `item` must appear exactly once in `verification_plan`.
+- Preserve the recommended thumbnail rank, concept name, thumbnail text, and creator-assets list exactly.
+- Required thumbnail assets must appear in `asset_plan`.
+- Recording segments may reference only deterministic script sections supplied in the input.
+- Use the real Hermes `delegate_task(goal="...", context="...")` interface exactly once; never narrate or simulate delegation.
 
 ## Engineering rules
 1. Inspect existing code/docs before changes.
@@ -55,18 +56,19 @@ Milestone 5 does not automatically revise scripts or thumbnail concepts. It does
 6. Fail loudly with actionable errors.
 7. Keep runtime state in SQLite, not Git.
 8. Do not publish or mutate creator accounts without explicit human approval.
-9. Do not call image generation from Thumbnail Director or QA workflows.
-10. QA is advisory/non-mutating; revisions require a later explicit workflow or human action.
+9. Do not call image generation from Thumbnail Director, QA, or Delivery workflows.
+10. QA and Delivery are advisory/non-mutating; revisions require an explicit later workflow or human action.
 
-## Milestone 5 verification
+## Milestone 6 verification
 - `python -m pytest`
-- `python scripts/init_db.py` against the existing server database
-- `python scripts/prepare_qa.py`
-- one real Hermes QA delegation following `workflows/content-qa.md`
-- validate PASS/NEEDS_CHANGES blocking logic
-- confirm open creator/fact-check items remain separately visible
-- confirm QA persistence/rendering does not modify upstream assets or external accounts
+- run `python scripts/prepare_delivery.py` against the existing QA-passed server state
+- confirm preparation refuses non-PASS QA state
+- one real Hermes Delivery Producer delegation following `workflows/delivery-handoff.md`
+- confirm every creator placeholder and verification item is covered exactly once
+- confirm the validated recommended thumbnail is preserved
+- run the real finalizer and verify canonical JSON/Markdown plus SQLite rows
+- confirm upstream script/thumbnail/QA assets and external accounts remain unchanged
 
 ## Architecture ownership
-Hermes: operations plus Strategist, Script Writer, Thumbnail Director, and QA delegation.
+Hermes: operations plus Strategist, Script Writer, Thumbnail Director, QA, and Delivery Producer delegation.
 Codex: codebase, tests, integrations, migrations, debugging, deployment improvements.

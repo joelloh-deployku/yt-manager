@@ -15,17 +15,20 @@ Milestone 3 adds a hard human strategy-to-script approval boundary. `approve_str
 Milestone 4 turns a validated script into exactly three distinct thumbnail/packaging concepts plus one recommended rank. It validates short thumbnail text, source IDs, distinct visual hooks, creator-asset needs, and render-ready direction. It does **not** generate a thumbnail image.
 
 ## Milestone 5: Content QA Gate
-Milestone 5 reviews the validated script + thumbnail package as one unit without modifying either asset:
+Milestone 5 reviews the validated script + thumbnail package as one unit without modifying either asset. QA returns `PASS` or `NEEDS_CHANGES` with structured findings. `PASS` means the generated package is coherent enough for Joel's next human production step; it is not fact-check completion or publishing approval.
 
-1. `python scripts/prepare_qa.py` packages the latest validated thumbnail report, its script, approved strategy lineage, creator inputs, verification notes, and deterministic checks.
-2. Hermes delegates exactly one QA subagent using `prompts/qa.md`.
-3. QA returns `PASS` or `NEEDS_CHANGES`, strengths, structured findings, and a recommended next action.
-4. Every finding has severity, area, evidence, recommended action, and a boolean blocking flag.
-5. `python scripts/finalize_qa.py ...` enforces status logic, persists one QA report plus findings, and renders Markdown.
+Explicit `[JOEL: ...]` placeholders, creator inputs, and verification notes remain visible as open human work.
 
-`PASS` means the generated package is coherent enough for Joel's next human production step. It is **not** fact-check completion, recording approval, image-generation approval, or publishing approval.
+## Milestone 6: Production Handoff / Delivery
+Milestone 6 turns one QA-passed package into a single recording/editing brief:
 
-Explicit `[JOEL: ...]` placeholders, `creator_inputs_needed`, and `verification_notes` remain visible as open human work. Their existence alone is not a QA failure when they are explicit and honest.
+1. `python scripts/prepare_delivery.py` selects the latest persisted QA report and refuses to continue unless its status is `PASS`.
+2. The deterministic input includes the validated script, QA findings, recommended thumbnail concept, creator inputs, verification notes, and approval lineage.
+3. Hermes delegates exactly one Delivery Producer using `prompts/delivery-producer.md`.
+4. The Delivery Producer sequences recording segments, maps every creator placeholder, carries every verification item, preserves the recommended thumbnail, builds an asset plan, adds editing notes, and creates a pre-recording checklist.
+5. `python scripts/finalize_delivery.py ...` validates complete coverage before persisting the handoff and rendering Markdown.
+
+Milestone 6 does not resolve creator inputs or verification notes automatically. It does not generate images, edit video, upload, publish, schedule, or mutate any YouTube account.
 
 ## Setup
 
@@ -91,8 +94,6 @@ python scripts/finalize_thumbnail.py \
   outputs/YYYY-MM-DD-thumbnail-draft.json
 ```
 
-Thumbnail defaults are three concepts with at most five words of thumbnail text. Image generation remains a separate human-triggered step.
-
 ### Content QA
 
 ```bash
@@ -107,19 +108,33 @@ python scripts/finalize_qa.py \
   outputs/YYYY-MM-DD-qa-draft.json
 ```
 
-Canonical QA outputs are:
-- `outputs/YYYY-MM-DD-qa.json`
-- `outputs/YYYY-MM-DD-qa.md`
+### Production handoff / delivery
+
+```bash
+python scripts/prepare_delivery.py
+```
+
+The deterministic input is `outputs/YYYY-MM-DD-production-input.json`. After the real Hermes Delivery Producer writes `outputs/YYYY-MM-DD-delivery-draft.json`:
+
+```bash
+python scripts/finalize_delivery.py \
+  outputs/YYYY-MM-DD-production-input.json \
+  outputs/YYYY-MM-DD-delivery-draft.json
+```
+
+Canonical delivery outputs are:
+- `outputs/YYYY-MM-DD-delivery.json`
+- `outputs/YYYY-MM-DD-delivery.md`
 
 Reports are written to `outputs/`. Runtime state is stored in `data/yt_manager.db`. Both are ignored by Git.
 
-## QA decision rules
-- `BLOCKER` or `HIGH` findings require `NEEDS_CHANGES`.
-- Any finding marked as blocking requires `NEEDS_CHANGES`.
-- `PASS` may contain non-blocking `MEDIUM` or `LOW` observations.
-- `NEEDS_CHANGES` must contain at least one real material blocking/HIGH/BLOCKER defect.
-- QA findings must use evidence present in the supplied QA input.
-- QA does not rewrite upstream assets.
+## Delivery invariants
+- Production handoff requires persisted QA status `PASS`.
+- Every creator placeholder must appear exactly once in the recording plan.
+- Every verification-note item must appear exactly once in the verification plan.
+- The recommended thumbnail rank, concept name, text, and creator-assets list must remain unchanged.
+- Required thumbnail assets must be present in the asset plan.
+- The Delivery Producer does not rewrite upstream script, thumbnail, or QA assets.
 
 ## Key workflow files
 - `workflows/daily-research.md`
@@ -127,21 +142,23 @@ Reports are written to `outputs/`. Runtime state is stored in `data/yt_manager.d
 - `workflows/script-writing.md`
 - `workflows/thumbnail-direction.md`
 - `workflows/content-qa.md`
+- `workflows/delivery-handoff.md`
 - `prompts/strategist.md`
 - `prompts/script-writer.md`
 - `prompts/thumbnail-director.md`
 - `prompts/qa.md`
+- `prompts/delivery-producer.md`
 - `schemas/strategist-output.schema.json`
 - `schemas/script-writer-output.schema.json`
 - `schemas/thumbnail-director-output.schema.json`
 - `schemas/qa-output.schema.json`
-- `docs/milestone-5-qa.md`
+- `schemas/delivery-output.schema.json`
 
 ## Division of responsibility
-- **Hermes:** operational execution and focused Strategist, Script Writer, Thumbnail Director, and QA delegation.
+- **Hermes:** operational execution and focused Strategist, Script Writer, Thumbnail Director, QA, and Delivery Producer delegation.
 - **Codex:** engineering, tests, integrations, migrations, debugging, and maintainability.
-- **Deterministic Python:** API ingestion, scoring, velocity, approvals, context construction, validation, persistence, limits, and reports.
-- **Joel:** chooses the strategy opportunity, supplies real creator evidence/assets, reviews QA output, and controls any later image generation or publishing action.
+- **Deterministic Python:** API ingestion, scoring, approvals, context construction, gates, validation, persistence, and reports.
+- **Joel:** chooses the strategy opportunity, supplies real creator evidence/assets, resolves verification work, records/edits content, and controls any later image generation or publishing action.
 
-## After Milestone 5
-The next logical layer is a **human delivery/production handoff** that packages the QA-passed script, recommended thumbnail direction, creator inputs, and verification checklist into one recording/editing brief. Publishing remains a later explicit approval boundary.
+## After Milestone 6
+Later layers may cover human-reviewed metadata/editing workflows, explicit publishing approvals/integrations, analytics, additional research agents, and the weekly channel audit. None of those actions are authorized by a Milestone 6 delivery report.
