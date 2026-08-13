@@ -1,0 +1,25 @@
+{
+  "channel_name": "Joel Michael Loh",
+  "channel_handle": "@joelmichaelloh",
+  "channel_url": "https://www.youtube.com/@joelmichaelloh",
+  "positioning": "Practical AI agents, AI automation, Codex and Claude Code, AI businesses, and useful AI workflows for entrepreneurs and creators.",
+  "target_audience": [
+    "solo builders",
+    "entrepreneurs",
+    "creators",
+    "technically curious operators who want practical AI leverage"
+  ],
+  "content_pillars": [
+    "agentic coding and software factories",
+    "practical AI agents and automations",
+    "AI business and product experiments",
+    "multi-agent workflows, memory, tools, and orchestration"
+  ],
+  "strategist_preferences": [
+    "Prefer ideas Joel can demonstrate, build, test, or explain with first-hand evidence.",
+    "Prefer practical outcomes over generic AI news summaries.",
+    "Use competitor performance as evidence, not as permission to copy a title or concept.",
+    "Trading, Polymarket, and narrow finance topics are adjacent rather than core unless the transferable AI-agent lesson is strong.",
+    "Deep developer topics should be translated into a useful builder, entrepreneur, or creator outcome when possible."
+  ]
+}
