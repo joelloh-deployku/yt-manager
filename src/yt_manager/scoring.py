@@ -1,6 +1,9 @@
 from datetime import datetime, timedelta, timezone
 from statistics import median
 
+BREAKOUT_THRESHOLD = 1.25
+WATCHLIST_THRESHOLD = 0.80
+
 
 def calculate_baseline(view_counts: list[int]) -> float:
     """Return a robust recent-channel baseline using median views."""
@@ -15,6 +18,15 @@ def calculate_outlier_score(views: int, baseline_views: float) -> float:
     if baseline_views <= 0:
         return 0.0
     return round(int(views) / float(baseline_views), 2)
+
+
+def classify_outlier(score: float) -> str:
+    """Classify raw outlier performance without mixing in topic relevance."""
+    if score >= BREAKOUT_THRESHOLD:
+        return "breakout"
+    if score >= WATCHLIST_THRESHOLD:
+        return "watchlist"
+    return "underperformer"
 
 
 def partition_by_candidate_window(
