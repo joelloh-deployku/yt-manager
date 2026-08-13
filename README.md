@@ -19,12 +19,23 @@ Milestone 1 established:
 Milestone 2 adds a judgment layer without weakening the deterministic research foundation:
 
 1. `config/channel-profile.json` defines Joel's positioning, audience, pillars, and strategist preferences.
-2. `python scripts/prepare_daily_strategy.py` packages the latest completed research run into a structured strategist-input JSON.
+2. `python scripts/prepare_daily_strategy.py` packages the latest completed research run into structured strategist input.
 3. Hermes delegates one focused Strategist subagent using `prompts/strategist.md`.
-4. The Strategist returns up to three ranked opportunities as JSON, each tied to source video IDs from the current research run.
-5. `python scripts/finalize_strategy.py ...` validates the evidence, stores the strategy in SQLite, and renders a human-readable Markdown brief.
+4. The Strategist returns three ranked opportunities tied to real source video IDs.
+5. `python scripts/finalize_strategy.py ...` validates the evidence, stores the strategy in SQLite, and renders a Markdown brief.
 
-The agent makes qualitative decisions about relevance, timing, transferability, and packaging. Deterministic Python remains responsible for metrics, velocity, validation, persistence, and rendering.
+## Milestone 3: Human-approved Script Writer
+
+Milestone 3 adds script writing behind a hard human approval boundary:
+
+1. Joel explicitly approves one validated strategist opportunity with `python scripts/approve_strategy.py --rank <N>`.
+2. The approval is persisted in SQLite; without it, script preparation fails.
+3. `python scripts/prepare_script.py` packages exactly that approved opportunity, channel profile, human notes, and permitted inspiration sources into script-input JSON.
+4. Hermes delegates one focused Script Writer subagent using `prompts/script-writer.md`.
+5. The Script Writer returns three original title options, a video brief, a full script, source IDs, creator-input placeholders, and verification notes.
+6. `python scripts/finalize_script.py ...` enforces the approval IDs, source IDs, minimum structure/word count, title-copy protection, persistence, and Markdown rendering.
+
+Competitor source records contain titles and performance metadata only. They are useful for topic/packaging evidence, but they are not transcripts or factual sources for the script. Missing Joel-specific results must remain explicit `[JOEL: ...]` placeholders rather than fabricated first-person claims.
 
 No automatic publishing is included.
 
@@ -46,25 +57,52 @@ python scripts/init_db.py
 python -m pytest
 ```
 
-Run research:
+### Research and strategy
 
 ```bash
 python scripts/run_daily_research.py
-```
-
-Prepare the strategy context:
-
-```bash
 python scripts/prepare_daily_strategy.py
 ```
 
-After Hermes produces `outputs/YYYY-MM-DD-strategy-draft.json`, validate and finalize it with:
+After Hermes produces `outputs/YYYY-MM-DD-strategy-draft.json`:
 
 ```bash
 python scripts/finalize_strategy.py \
   outputs/YYYY-MM-DD-strategist-input.json \
   outputs/YYYY-MM-DD-strategy-draft.json
 ```
+
+### Explicitly approve one opportunity for scripting
+
+Review the validated strategy first. Then, as the human approval action:
+
+```bash
+python scripts/approve_strategy.py --rank 1
+```
+
+Optional creative direction can be captured with:
+
+```bash
+python scripts/approve_strategy.py --rank 1 --notes "Make the demo practical and show the failure mode first."
+```
+
+Hermes must not choose or run this approval on Joel's behalf unless Joel explicitly instructs Hermes to approve that exact rank.
+
+### Prepare and finalize the script
+
+```bash
+python scripts/prepare_script.py
+```
+
+After the real Hermes Script Writer produces `outputs/YYYY-MM-DD-script-draft.json`:
+
+```bash
+python scripts/finalize_script.py \
+  outputs/YYYY-MM-DD-script-input.json \
+  outputs/YYYY-MM-DD-script-draft.json
+```
+
+The default minimum full-script length is `SCRIPT_MIN_WORDS=600`. This is a completeness floor, not a target duration.
 
 Reports are written to `outputs/`. Runtime state is stored in `data/yt_manager.db`. Both are ignored by Git.
 
@@ -74,15 +112,19 @@ See:
 - `docs/hermes-server-setup.md` for the home-server walkthrough
 - `workflows/daily-research.md` for deterministic research
 - `workflows/daily-strategy.md` for the Hermes Strategist procedure
-- `schemas/strategist-output.schema.json` for the agent output contract
+- `workflows/script-writing.md` for the approved Script Writer procedure
+- `schemas/strategist-output.schema.json` for the Strategist contract
+- `schemas/script-writer-output.schema.json` for the Script Writer contract
 
 ## Division of responsibility
 
-- **Hermes:** runs operational workflows and delegates the Strategist.
+- **Hermes:** runs operational workflows and delegates focused Strategist/Script Writer subagents.
 - **Codex:** engineers, tests, debugs, and improves this repository from the main machine.
-- **Deterministic Python:** API ingestion, scoring, velocity calculation, persistence, validation, and reporting.
-- **Hermes Strategist:** qualitative opportunity selection using only the supplied source-backed research context.
+- **Deterministic Python:** API ingestion, scoring, velocity, human approval records, context construction, persistence, validation, word counting, and reporting.
+- **Hermes Strategist:** qualitative opportunity selection using supplied source-backed research context.
+- **Hermes Script Writer:** creative development of exactly one human-approved opportunity into a source-aware first-draft script.
+- **Joel:** selects the opportunity and reviews the script before recording or any later publishing step.
 
-## After Milestone 2
+## After Milestone 3
 
-Once strategy selection is reliable, the next layers are script writer, thumbnail director, QA, delivery, analytics, additional research agents, and the weekly channel audit.
+Once the Script Writer is reliable, the next layers are thumbnail direction, QA, delivery, analytics, additional research agents, and the weekly channel audit.
