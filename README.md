@@ -8,10 +8,11 @@ The first milestone is intentionally narrow:
 
 1. Hermes runs on the home server.
 2. GitHub is the shared source of truth for code and workflow instructions.
-3. SQLite stores research runs and candidate videos locally on the server.
-4. YouTube Data API collects recent uploads from configured competitor channels.
-5. Deterministic scoring ranks videos against each channel's recent median views.
-6. Each run produces one Markdown daily research report.
+3. SQLite stores research runs, candidate videos, and repeated view snapshots locally on the server.
+4. YouTube Data API collects uploads from configured competitor channels.
+5. A configurable 14-day candidate window is compared against older historical uploads from each channel.
+6. Deterministic raw outlier scoring classifies candidates as breakouts, watchlist items, or underperformers.
+7. Each run produces one Markdown daily research report with candidate age and source links.
 
 No automatic publishing is included.
 
@@ -35,6 +36,8 @@ python scripts/run_daily_research.py
 ```
 
 Reports are written to `outputs/`. Runtime state is stored in `data/yt_manager.db`. Both are ignored by Git.
+
+The default candidate window is 14 days (`CANDIDATE_WINDOW_DAYS=14`). Repeated runs append view observations to `video_snapshots`; a later milestone will use those observations to calculate real view velocity.
 
 See `docs/hermes-server-setup.md` for the home-server walkthrough and `workflows/daily-research.md` for Hermes's operating procedure.
 
