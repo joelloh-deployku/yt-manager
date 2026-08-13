@@ -1,19 +1,51 @@
 from googleapiclient.discovery import build
 
 
+def normalize_channel_ref(value: str) -> str:
+    value = value.strip()
+    if not value:
+        raise ValueError("Channel reference cannot be empty")
+    if value.startswith("https://www.youtube.com/@"):
+        return "@" + value.split("/@", 1)[1].split("/", 1)[0]
+    if value.startswith("youtube.com/@"):
+        return "@" + value.split("/@", 1)[1].split("/", 1)[0]
+    return value
+
+
 class YouTubeResearchClient:
     def __init__(self, api_key: str):
         if not api_key:
             raise ValueError("YOUTUBE_API_KEY is required")
         self.youtube = build("youtube", "v3", developerKey=api_key, cache_discovery=False)
 
-    def recent_videos(self, channel_id: str, max_results: int = 15) -> list[dict]:
+    def resolve_channel_id(self, channel_ref: str) -> str:
+        ref = normalize_channel_ref(channel_ref)
+        if ref.startswith("UC"):
+            return ref
+
+        if ref.startswith("@"):
+            response = self.youtube.channels().list(
+                part="id",
+                forHandle=ref,
+            ).execute()
+            items = response.get("items", [])
+            if not items:
+                raise ValueError(f"YouTube handle not found: {ref}")
+            return items[0]["id"]
+
+        raise ValueError(
+            f"Unsupported YouTube channel reference: {channel_ref}. "
+            "Use a UC... channel ID, @handle, or youtube.com/@handle URL."
+        )
+
+    def recent_videos(self, channel_ref: str, max_results: int = 15) -> list[dict]:
+        channel_id = self.resolve_channel_id(channel_ref)
         channel = self.youtube.channels().list(
             part="snippet,contentDetails",
             id=channel_id,
         ).execute()
         if not channel.get("items"):
-            raise ValueError(f"YouTube channel not found: {channel_id}")
+            raise ValueError(f"YouTube channel not found: {channel_ref}")
 
         item = channel["items"][0]
         channel_title = item["snippet"]["title"]
