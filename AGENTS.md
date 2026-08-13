@@ -3,15 +3,31 @@
 ## Mission
 Build and maintain a reliable AI-assisted YouTube content operations system. Hermes operates the daily content workflow on the home server. Codex owns engineering, testing, debugging, and maintainability.
 
-## Milestone 1 scope
-Milestone 1 is deliberately narrow:
+## Milestone 1 foundation
+Milestone 1 established:
 - SQLite runtime state
 - YouTube Data API ingestion for configured competitor channels
-- deterministic outlier scoring
+- configurable 14-day candidate research
+- historical channel baselines and deterministic outlier scoring
+- repeated view snapshots
 - one Markdown daily research report
-- Hermes workflow instructions for running the pipeline
 
-Do not implement scripting, thumbnail generation, publishing, X/Twitter research, dashboards, or the weekly audit until Milestone 1 is reliable.
+## Milestone 2 scope
+Milestone 2 adds the Hermes Strategist above the research foundation:
+- a versioned channel profile
+- deterministic strategist-input JSON built from the latest completed research run
+- one focused Hermes Strategist subagent for judgment-heavy prioritization
+- a strict JSON output contract with source video IDs
+- deterministic validation, Markdown rendering, and SQLite persistence
+
+Do not add full script writing, thumbnail generation, publishing, X/Twitter research, dashboards, scheduling, or the weekly audit in Milestone 2.
+
+## Agent boundary
+1. Deterministic Python owns API calls, raw metrics, scoring, snapshot/velocity calculations, validation, persistence, and report rendering.
+2. Hermes owns operational execution and strategy judgment.
+3. The Strategist must reason from supplied evidence; it must not invent metrics, URLs, source videos, or research findings.
+4. Strategy recommendations must remain auditable to source video IDs from the current research run.
+5. Relevance and measured performance are separate concepts. A performance tier is evidence, not the final decision.
 
 ## Engineering rules
 1. Inspect existing code and docs before changing them.
@@ -28,9 +44,10 @@ Do not implement scripting, thumbnail generation, publishing, X/Twitter research
 ## Verification
 Before considering a change complete:
 - run `python -m pytest`
-- run the relevant script locally where credentials are not required, or use mocked tests
+- run the relevant deterministic preparation/validation scripts
+- perform a real Hermes strategy run manually before scheduling it
 - update documentation when configuration or behavior changes
 
 ## Architecture ownership
-Hermes: operations, scheduled execution, later research/content subagents.
+Hermes: operations, strategist execution, and later research/content subagents.
 Codex: codebase, tests, integrations, migrations, debugging, deployment improvements.
