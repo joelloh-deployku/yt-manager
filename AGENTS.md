@@ -20,8 +20,8 @@ Milestone 2 established:
 - a strict source-backed JSON output contract
 - deterministic validation, Markdown rendering, and SQLite strategy persistence
 
-## Milestone 3 scope
-Milestone 3 adds script writing behind an explicit human approval gate:
+## Milestone 3 foundation
+Milestone 3 established script writing behind an explicit human approval gate:
 - SQLite approval records tied to one validated strategy opportunity
 - `approve_strategy.py` as the explicit human approval action
 - deterministic script-input JSON containing exactly one approved opportunity
@@ -29,23 +29,33 @@ Milestone 3 adds script writing behind an explicit human approval gate:
 - a strict script JSON contract with title options, brief, full script, source IDs, verification notes, and creator placeholders
 - deterministic word counting, evidence validation, Markdown rendering, and SQLite script persistence
 
-Do not add thumbnail generation, publishing, X/Twitter research, dashboards, automated scheduling, video editing, or the weekly audit in Milestone 3.
+## Milestone 4 scope
+Milestone 4 adds thumbnail direction after a validated Script Writer report:
+- deterministic thumbnail-input JSON built from the validated script, approved strategy, channel profile, and permitted source IDs
+- one focused Hermes Thumbnail Director subagent
+- exactly three distinct packaging concepts and one recommended rank
+- thumbnail-text word limits, creator-asset requirements, and render-ready visual direction
+- deterministic source validation, originality checks, Markdown rendering, and SQLite thumbnail persistence
+
+Milestone 4 does **not** generate thumbnail images. It also excludes image editing, thumbnail upload, publishing, scheduling, video editing, X/Twitter research, dashboards, and the weekly audit.
 
 ## Human approval boundary
 1. Hermes must not approve a strategist opportunity on Joel's behalf.
 2. Script writing requires a row in `script_approvals` created by an explicit human action.
-3. `python scripts/approve_strategy.py --rank <N>` is the canonical approval action.
-4. Hermes may run that command only when Joel explicitly instructs Hermes to approve that exact rank in the current conversation.
-5. A generated script remains a draft for Joel's review; it is not publishing approval.
+3. `python scripts/approve_strategy.py --rank <N>` is the canonical strategy-to-script approval action.
+4. A validated script remains a draft for Joel's review; it is not publishing approval.
+5. Thumbnail concepts may be generated from a validated script, but actual thumbnail image generation remains a separate human-triggered action.
 
 ## Agent boundary
 1. Deterministic Python owns API calls, raw metrics, scoring, snapshot/velocity calculations, approval records, context construction, validation, persistence, word counting, and report rendering.
 2. Hermes owns operational execution and delegates judgment/creative work to focused subagents.
 3. The Strategist reasons from supplied research evidence and must not invent metrics or sources.
 4. The Script Writer develops only the approved opportunity and must not silently switch topics.
-5. Competitor titles/performance are inspiration evidence, not transcripts or factual sources for script claims.
-6. Missing Joel-specific results or opinions must use `[JOEL: ...]` placeholders rather than fabricated first-person claims.
-7. Unsupported current or technical facts must be surfaced in `verification_notes` rather than asserted as settled fact.
+5. The Thumbnail Director develops packaging directions only from the validated script and approved evidence.
+6. Competitor titles/performance are topic and packaging-territory evidence, not transcripts, factual sources, or evidence of competitor thumbnail visuals.
+7. The Thumbnail Director must never infer a competitor's thumbnail composition, colors, objects, facial expression, or text from a video title.
+8. Missing Joel-specific script results or opinions use `[JOEL: ...]` placeholders; missing thumbnail assets are listed in `creator_assets_needed`.
+9. Unsupported current or technical script facts remain in `verification_notes` rather than being asserted as settled fact.
 
 ## Engineering rules
 1. Inspect existing code and docs before changing them.
@@ -58,16 +68,19 @@ Do not add thumbnail generation, publishing, X/Twitter research, dashboards, aut
 8. Keep runtime state in SQLite, not Git.
 9. Keep source URLs and raw metrics with research candidates for auditability.
 10. Do not publish content or mutate external creator accounts without explicit human approval.
+11. Do not call an image-generation tool from the Milestone 4 Thumbnail Director workflow.
 
 ## Verification
-Before considering a change complete:
+Before considering Milestone 4 complete:
 - run `python -m pytest`
-- run the relevant deterministic preparation/validation scripts
-- verify script preparation fails without human approval
-- perform one real Hermes Script Writer delegation after a human-approved opportunity
-- confirm finalization rejects hallucinated source IDs and undersized scripts
+- run `python scripts/init_db.py` against the existing server database
+- run `python scripts/prepare_thumbnail.py` and confirm it selects the validated script
+- perform one real Hermes Thumbnail Director delegation
+- confirm finalization rejects hallucinated source IDs, excessive thumbnail text, and duplicate visual hooks
+- confirm exactly three concepts plus one recommended rank are persisted and rendered
+- confirm no image generation, upload, publishing, scheduling, or account mutation occurs
 - update documentation when configuration or behavior changes
 
 ## Architecture ownership
-Hermes: operations plus focused Strategist/Script Writer delegation.
+Hermes: operations plus focused Strategist, Script Writer, and Thumbnail Director delegation.
 Codex: codebase, tests, integrations, migrations, debugging, deployment improvements.
