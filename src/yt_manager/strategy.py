@@ -20,7 +20,10 @@ def load_channel_profile(path: str) -> dict:
     profile_path = Path(path)
     if not profile_path.exists():
         raise FileNotFoundError(f"Channel profile not found: {profile_path}")
-    return json.loads(profile_path.read_text(encoding="utf-8"))
+    profile = json.loads(profile_path.read_text(encoding="utf-8"))
+    if not isinstance(profile, dict):
+        raise ValueError("Channel profile must be a JSON object")
+    return profile
 
 
 def build_strategy_context(
@@ -52,6 +55,8 @@ def build_strategy_context(
             ORDER BY outlier_score DESC""",
             (run["id"],),
         ).fetchall()
+        if not rows:
+            raise ValueError("Latest completed research run has no candidates")
 
         candidates = []
         for row in rows:
@@ -66,14 +71,16 @@ def build_strategy_context(
                 LIMIT 1""",
                 (run["id"], row["video_id"]),
             ).fetchone()
-            previous_snapshot = conn.execute(
-                """SELECT observed_at, views
-                FROM video_snapshots
-                WHERE video_id=? AND run_id<>?
-                ORDER BY observed_at DESC
-                LIMIT 1""",
-                (row["video_id"], run["id"]),
-            ).fetchone()
+            previous_snapshot = None
+            if current_snapshot:
+                previous_snapshot = conn.execute(
+                    """SELECT observed_at, views
+                    FROM video_snapshots
+                    WHERE video_id=? AND observed_at<?
+                    ORDER BY observed_at DESC
+                    LIMIT 1""",
+                    (row["video_id"], current_snapshot["observed_at"]),
+                ).fetchone()
 
             view_delta = None
             velocity_views_per_hour = None
@@ -129,6 +136,8 @@ def write_strategy_context(context: dict, output_dir: str) -> Path:
 
 
 def validate_strategy_payload(payload: dict, context: dict) -> None:
+    if not isinstance(payload, dict):
+        raise ValueError("Strategy payload must be a JSON object")
     if payload.get("research_run_id") != context.get("research_run_id"):
         raise ValueError("Strategy research_run_id does not match strategist input")
 
@@ -147,11 +156,13 @@ def validate_strategy_payload(payload: dict, context: dict) -> None:
     valid_video_ids = {item["video_id"] for item in context.get("candidates", [])}
     expected_ranks = list(range(1, expected_count + 1))
     ranks = [item.get("rank") for item in opportunities]
-    if sorted(ranks) != expected_ranks:
+    if any(not isinstance(rank, int) for rank in ranks) or sorted(ranks) != expected_ranks:
         raise ValueError(f"Opportunity ranks must be exactly {expected_ranks}")
 
     required_text = ["working_title", "angle", "why_now", "audience_fit", "risks"]
     for item in opportunities:
+        if not isinstance(item, dict):
+            raise ValueError("Each opportunity must be a JSON object")
         for field in required_text:
             if not str(item.get(field, "")).strip():
                 raise ValueError(f"Opportunity {item.get('rank')} is missing {field}")
@@ -165,6 +176,8 @@ def validate_strategy_payload(payload: dict, context: dict) -> None:
         source_video_ids = item.get("source_video_ids")
         if not isinstance(source_video_ids, list) or not source_video_ids:
             raise ValueError(f"Opportunity {item.get('rank')} needs at least one source_video_id")
+        if any(not isinstance(video_id, str) or not video_id.strip() for video_id in source_video_ids):
+            raise ValueError(f"Opportunity {item.get('rank')} has an invalid source_video_id")
         unknown = set(source_video_ids) - valid_video_ids
         if unknown:
             raise ValueError(
