@@ -7,6 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from yt_manager.scoring import (
     calculate_baseline,
     calculate_outlier_score,
+    classify_outlier,
     partition_by_candidate_window,
 )
 
@@ -21,6 +22,13 @@ def test_outlier_score():
 
 def test_zero_baseline_is_safe():
     assert calculate_outlier_score(500, 0) == 0.0
+
+
+def test_performance_tiers():
+    assert classify_outlier(1.25) == "breakout"
+    assert classify_outlier(1.24) == "watchlist"
+    assert classify_outlier(0.80) == "watchlist"
+    assert classify_outlier(0.79) == "underperformer"
 
 
 def test_partition_uses_candidate_window():
