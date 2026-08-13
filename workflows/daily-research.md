@@ -11,10 +11,18 @@ Produce one evidence-backed YouTube opportunity report from configured competito
 5. Read the generated `outputs/YYYY-MM-DD-daily-research.md` report.
 6. Return a short operational summary containing:
    - number of candidates analyzed
-   - top 3 outliers
-   - their outlier scores
+   - breakout count and strongest breakouts
+   - relevant watchlist items worth monitoring even if they are not breakouts
+   - raw outlier scores and candidate ages
    - report path
 7. If execution fails, do not invent results. Report the exact stage that failed and preserve the error for Codex investigation.
+
+## How to interpret the report
+- **Breakout (>= 1.25x):** materially above the channel's historical median. Treat this as a performance signal, not automatic proof that Joel should copy the topic.
+- **Watchlist (0.80x - 1.24x):** near normal channel performance. A highly relevant topic can still be strategically useful here.
+- **Underperformer (< 0.80x):** below the historical median. Keep as negative evidence rather than calling it an opportunity.
+- Keep **topic relevance** separate from the deterministic raw outlier score. Do not alter the score to make a topic look more relevant.
+- The database records view snapshots on each run. Later milestones will use repeated observations to calculate real view velocity.
 
 ## Guardrails
 - Do not modify YouTube accounts.
