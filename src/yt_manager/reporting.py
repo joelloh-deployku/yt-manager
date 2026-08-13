@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from yt_manager.scoring import classify_outlier
@@ -13,7 +13,7 @@ def _parse_timestamp(value: str) -> datetime:
 
 def format_candidate_age(published_at: str, now: datetime) -> str:
     published = _parse_timestamp(published_at)
-    delta = max(now - published, published - published)
+    delta = max(now - published, timedelta(0))
     total_hours = max(int(delta.total_seconds() // 3600), 0)
     if total_hours < 24:
         unit = "hour" if total_hours == 1 else "hours"
