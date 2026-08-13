@@ -64,6 +64,7 @@ def main() -> int:
                 item["outlier_score"] = calculate_outlier_score(item["views"], baseline)
                 candidates.append(item)
 
+        observed_at = datetime.now(timezone.utc).isoformat()
         with connect(db_path) as conn:
             for item in candidates:
                 conn.execute(
@@ -75,6 +76,12 @@ def main() -> int:
                      item["title"], item["published_at"], item["views"],
                      item["baseline_views"], item["outlier_score"], item["url"]),
                 )
+                conn.execute(
+                    """INSERT INTO video_snapshots
+                    (run_id, video_id, channel_id, observed_at, views)
+                    VALUES (?, ?, ?, ?, ?)""",
+                    (run_id, item["video_id"], item["channel_id"], observed_at, item["views"]),
+                )
             conn.execute(
                 "UPDATE runs SET completed_at=?, status=?, candidate_count=? WHERE id=?",
                 (datetime.now(timezone.utc).isoformat(), "completed", len(candidates), run_id),
@@ -83,6 +90,7 @@ def main() -> int:
         report = render_daily_report(candidates, output_dir)
         print(f"Research complete: {len(candidates)} candidates")
         print(f"Candidate window: last {candidate_window_days} days")
+        print(f"View snapshots recorded: {len(candidates)}")
         print(f"Report: {report}")
         return 0
     except Exception as exc:
