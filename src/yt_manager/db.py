@@ -62,6 +62,26 @@ CREATE TABLE IF NOT EXISTS strategy_opportunities (
     FOREIGN KEY(strategy_report_id) REFERENCES strategy_reports(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS script_approvals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    strategy_report_id INTEGER NOT NULL,
+    opportunity_rank INTEGER NOT NULL,
+    approved_at TEXT NOT NULL,
+    notes TEXT NOT NULL DEFAULT '',
+    UNIQUE(strategy_report_id, opportunity_rank),
+    FOREIGN KEY(strategy_report_id) REFERENCES strategy_reports(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS script_reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    approval_id INTEGER NOT NULL UNIQUE,
+    created_at TEXT NOT NULL,
+    working_title TEXT NOT NULL,
+    word_count INTEGER NOT NULL,
+    raw_json TEXT NOT NULL,
+    FOREIGN KEY(approval_id) REFERENCES script_approvals(id) ON DELETE CASCADE
+);
+
 CREATE INDEX IF NOT EXISTS idx_candidates_run_score
 ON candidates(run_id, outlier_score DESC);
 
@@ -70,6 +90,9 @@ ON video_snapshots(video_id, observed_at);
 
 CREATE INDEX IF NOT EXISTS idx_strategy_opportunities_report_rank
 ON strategy_opportunities(strategy_report_id, rank);
+
+CREATE INDEX IF NOT EXISTS idx_script_approvals_report_rank
+ON script_approvals(strategy_report_id, opportunity_rank);
 """
 
 
