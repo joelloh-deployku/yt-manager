@@ -16,14 +16,19 @@ from yt_manager.youtube import YouTubeResearchClient
 def main() -> int:
     load_dotenv(ROOT / ".env")
     api_key = os.getenv("YOUTUBE_API_KEY", "").strip()
-    channel_ids = [x.strip() for x in os.getenv("COMPETITOR_CHANNEL_IDS", "").split(",") if x.strip()]
+    raw_channels = os.getenv("COMPETITOR_CHANNELS", "").strip()
+    if not raw_channels:
+        raw_channels = os.getenv("COMPETITOR_CHANNEL_IDS", "").strip()
+    channels = [x.strip() for x in raw_channels.split(",") if x.strip()]
     videos_per_channel = int(os.getenv("VIDEOS_PER_CHANNEL", "15"))
     baseline_count = int(os.getenv("BASELINE_VIDEO_COUNT", "12"))
     db_path = os.getenv("DATABASE_PATH", "data/yt_manager.db")
     output_dir = os.getenv("OUTPUT_DIR", "outputs")
 
-    if not channel_ids:
-        raise SystemExit("COMPETITOR_CHANNEL_IDS must contain at least one YouTube channel ID")
+    if not channels:
+        raise SystemExit(
+            "COMPETITOR_CHANNELS must contain at least one @handle, channel URL, or UC... channel ID"
+        )
 
     initialize(db_path)
     client = YouTubeResearchClient(api_key)
@@ -35,8 +40,8 @@ def main() -> int:
 
     candidates = []
     try:
-        for channel_id in channel_ids:
-            videos = client.recent_videos(channel_id, max(videos_per_channel, baseline_count))
+        for channel_ref in channels:
+            videos = client.recent_videos(channel_ref, max(videos_per_channel, baseline_count))
             baseline_sample = [v["views"] for v in videos[:baseline_count]]
             baseline = calculate_baseline(baseline_sample)
             for video in videos[:videos_per_channel]:
