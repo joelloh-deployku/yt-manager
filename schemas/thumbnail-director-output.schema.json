@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Thumbnail Director Output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["script_report_id", "summary", "recommended_rank", "concepts"],
+  "properties": {
+    "script_report_id": {"type": "integer", "minimum": 1},
+    "summary": {"type": "string", "minLength": 1},
+    "recommended_rank": {"type": "integer", "minimum": 1, "maximum": 3},
+    "concepts": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rank", "concept_name", "thumbnail_text", "visual_hook", "composition", "title_alignment", "emotional_tone", "rationale", "render_prompt", "creator_assets_needed", "source_video_ids", "risks"],
+        "properties": {
+          "rank": {"type": "integer", "minimum": 1, "maximum": 3},
+          "concept_name": {"type": "string", "minLength": 1},
+          "thumbnail_text": {"type": "string", "maxLength": 80},
+          "visual_hook": {"type": "string", "minLength": 1},
+          "composition": {"type": "string", "minLength": 1},
+          "title_alignment": {"type": "string", "minLength": 1},
+          "emotional_tone": {"type": "string", "minLength": 1},
+          "rationale": {"type": "string", "minLength": 1},
+          "render_prompt": {"type": "string", "minLength": 1},
+          "creator_assets_needed": {"type": "array", "items": {"type": "string", "minLength": 1}},
+          "source_video_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "risks": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}
