@@ -27,8 +27,22 @@ CREATE TABLE IF NOT EXISTS candidates (
     FOREIGN KEY(run_id) REFERENCES runs(id)
 );
 
+CREATE TABLE IF NOT EXISTS video_snapshots (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    run_id INTEGER NOT NULL,
+    video_id TEXT NOT NULL,
+    channel_id TEXT NOT NULL,
+    observed_at TEXT NOT NULL,
+    views INTEGER NOT NULL,
+    UNIQUE(run_id, video_id),
+    FOREIGN KEY(run_id) REFERENCES runs(id)
+);
+
 CREATE INDEX IF NOT EXISTS idx_candidates_run_score
 ON candidates(run_id, outlier_score DESC);
+
+CREATE INDEX IF NOT EXISTS idx_video_snapshots_video_time
+ON video_snapshots(video_id, observed_at);
 """
 
 
