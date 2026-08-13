@@ -27,6 +27,21 @@ Performance tier is a signal, not the final decision. A mature breakout is stron
 
 Do not recommend a narrow trading/Polymarket topic unless the recommendation extracts a broader AI-agent lesson that clearly fits Joel's channel.
 
+## Evidence hygiene
+Keep absolute popularity and relative performance separate.
+- A video with many absolute views can still be an underperformer for its channel.
+- Do not use a high absolute view count as proof that a topic is breaking out when its raw outlier is below 1.0x.
+- When multiple sources have mixed performance, say the evidence is mixed rather than averaging them into a stronger claim.
+- Attribute performance claims to the specific source that supports them. Do not write plural claims such as "these videos are pulling 100K+ views" unless the cited sources actually support that statement.
+- For uploads under 48 hours old, explicitly describe raw outlier evidence as provisional when using it in `why_now`.
+
+## Originality rules
+The competitor source is evidence, not a title template.
+- Do not reuse a competitor's distinctive title frame with simple noun substitutions.
+- Change the promise, structure, and point of view, not just the product names.
+- Avoid carrying over distinctive phrases from a source title when a fresh formulation can express the idea.
+- The working title should sound like Joel's own build/test/explain experience rather than a paraphrase of a cited competitor title.
+
 ## Output requirements
 Return JSON only. Do not wrap it in Markdown fences or add commentary before or after it.
 
@@ -35,8 +50,8 @@ Return JSON only. Do not wrap it in Markdown fences or add commentary before or 
 - Ranks must start at 1 and be consecutive.
 - Every opportunity must cite at least one `source_video_id` from the strategist input.
 - `confidence` must be `HIGH`, `MEDIUM`, or `LOW`.
-- `working_title` must be an original title for Joel, not a copied competitor title.
-- `why_now` must explicitly connect the recommendation to the evidence.
+- `working_title` must be an original title for Joel, not a copied or lightly paraphrased competitor title.
+- `why_now` must explicitly connect the recommendation to source-specific evidence and distinguish absolute views from relative outlier performance.
 - `risks` must state the main uncertainty, weak signal, saturation risk, or execution caveat.
 
 Use this shape:
