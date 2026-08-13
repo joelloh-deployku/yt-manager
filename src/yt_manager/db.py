@@ -82,6 +82,35 @@ CREATE TABLE IF NOT EXISTS script_reports (
     FOREIGN KEY(approval_id) REFERENCES script_approvals(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS thumbnail_reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    script_report_id INTEGER NOT NULL UNIQUE,
+    created_at TEXT NOT NULL,
+    recommended_rank INTEGER NOT NULL,
+    summary TEXT NOT NULL,
+    raw_json TEXT NOT NULL,
+    FOREIGN KEY(script_report_id) REFERENCES script_reports(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS thumbnail_concepts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    thumbnail_report_id INTEGER NOT NULL,
+    rank INTEGER NOT NULL,
+    concept_name TEXT NOT NULL,
+    thumbnail_text TEXT NOT NULL,
+    visual_hook TEXT NOT NULL,
+    composition TEXT NOT NULL,
+    title_alignment TEXT NOT NULL,
+    emotional_tone TEXT NOT NULL,
+    rationale TEXT NOT NULL,
+    render_prompt TEXT NOT NULL,
+    creator_assets_needed TEXT NOT NULL,
+    source_video_ids TEXT NOT NULL,
+    risks TEXT NOT NULL,
+    UNIQUE(thumbnail_report_id, rank),
+    FOREIGN KEY(thumbnail_report_id) REFERENCES thumbnail_reports(id) ON DELETE CASCADE
+);
+
 CREATE INDEX IF NOT EXISTS idx_candidates_run_score
 ON candidates(run_id, outlier_score DESC);
 
@@ -93,6 +122,9 @@ ON strategy_opportunities(strategy_report_id, rank);
 
 CREATE INDEX IF NOT EXISTS idx_script_approvals_report_rank
 ON script_approvals(strategy_report_id, opportunity_rank);
+
+CREATE INDEX IF NOT EXISTS idx_thumbnail_concepts_report_rank
+ON thumbnail_concepts(thumbnail_report_id, rank);
 """
 
 
